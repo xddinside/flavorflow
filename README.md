@@ -10,16 +10,17 @@ I have some rice, lentils, and classic indian masala, ginger. I also have bread,
 
 ### Stuff to implement
 
-- Make it scroll on both sides left and right to the latest message streamed.
-- On the response, respond always with 3 recipes. 
-- show only the recipe name and the image and maybe a line or two explaining the dish.
-- on clicking the recipe name or the image, expand that recipe to fullscreen and show the entire recipe including all the steps.
-- improve the prompts suggested.
-- make the UI better, add more color (amber)
-- make the responses look cleaner and intuitive
+- Make it scroll on left side to the latest message entered.
+- make the UI better (for recipe card and recipe details)
+- add conversation history if possible
+- add bookmark list for recipes, allowing to bookmark a recipe
+- add local caching for viewing all chats
+- add local caching for saving recipes to bookmark
 
 
 - Login / Auth (kinde)
 - Chat History
 - Connect to DB for history (Neon)
 - Deploy on vercel
+
+- flavorflow.tsx - 12 in undohistory is the one that works, before gemini and claude testing

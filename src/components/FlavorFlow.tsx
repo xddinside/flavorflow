@@ -15,19 +15,24 @@ export default function FlavorFlow() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+  // ADDED: State to hold plain text responses from the assistant
+  const [assistantTextMessage, setAssistantTextMessage] = useState<string | null>(null);
 
-  const sendChatMessage = async (content: string) => {
+const sendChatMessage = async (content: string) => {
     if (!content.trim()) return;
 
     const userMessage: Message = { id: Date.now().toString(), role: 'user', content: content };
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setIsGenerating(true);
+    setRecipes([]);
+    setAssistantTextMessage(null);
+    setSelectedRecipe(null);
 
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: [...messages, userMessage] }), // Send the whole history
+      body: JSON.stringify({ messages: [...messages, userMessage] }),
     });
 
     if (!res.body) {
@@ -49,97 +54,89 @@ export default function FlavorFlow() {
       const chunk = decoder.decode(value, { stream: true });
       assistantResponse += chunk;
     }
+    
+    // MODIFIED: Logic to handle both markdown-fenced and regular JSON
+    const finalResponse = assistantResponse.trim();
+    let isJson = false;
+    let jsonString = '';
 
+    if (finalResponse.startsWith('```json')) {
+      isJson = true;
+      // Extracts content from between the markdown fences
+      jsonString = finalResponse.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
+    } else if (finalResponse.startsWith('json')) {
+      isJson = true;
+      jsonString = finalResponse.substring(4).trim();
+    }
 
-    try {
-      const cleanedResponse = assistantResponse.replace(/^```json\n|\n```$/g, '');
-      const jsonResponse = JSON.parse(cleanedResponse);
-      const fetchedRecipes: Recipe[] = [];
+    if (isJson) {
+      try {
+        const jsonResponse = JSON.parse(jsonString);
+        const fetchedRecipes: Recipe[] = [];
+        const recipesData = Array.isArray(jsonResponse) ? jsonResponse : [jsonResponse];
 
-      if (Array.isArray(jsonResponse)) {
-        for (const recipeData of jsonResponse) {
-          const recipeName = recipeData.recipeName || "";
+        for (const recipeData of recipesData) {
+          const recipeName = recipeData.recipeName || "Untitled Recipe";
           const description = recipeData.description || "";
-          const ingredients = recipeData.ingredients || [];
-          const steps = recipeData.steps || [];
-          let imageUrl = `https://via.placeholder.com/300x200?text=${encodeURIComponent(recipeName || description)}`;
+          let imageUrl = `https://via.placeholder.com/300x200?text=${encodeURIComponent(recipeName)}`;
 
-          // Fetch image for the current recipe
           if (description) {
             try {
-              const response = await fetch("/api/generate-image", {
+              const imageRes = await fetch("/api/generate-image", {
                 method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ description: description }),
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ description }),
               });
-              const data = await response.json();
+              const data = await imageRes.json();
               if (data.imageUrl) {
                 imageUrl = data.imageUrl;
               }
             } catch (error) {
-              console.error("Error generating image for recipe:", error);
+              console.error("Error generating image:", error);
             }
           }
+
           fetchedRecipes.push({
             recipeName,
             description,
             imageUrl,
-            ingredients,
-            steps,
+            ingredients: recipeData.ingredients || [],
+            steps: recipeData.steps || [],
           });
         }
-      } else {
-        // Fallback for single object if array is not returned
-        const recipeName = jsonResponse.recipeName || "";
-        const description = jsonResponse.description || "";
-        const ingredients = jsonResponse.ingredients || [];
-        const steps = jsonResponse.steps || [];
-        let imageUrl = `https://via.placeholder.com/300x200?text=${encodeURIComponent(recipeName || description)}`;
-
-        if (description) {
-          try {
-            const response = await fetch("/api/generate-image", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ description: description }),
-            });
-            const data = await response.json();
-            if (data.imageUrl) {
-              imageUrl = data.imageUrl;
-            }
-          } catch (error) {
-            console.error("Error generating image for recipe:", error);
-          }
-        }
-        fetchedRecipes.push({
-          recipeName,
-          description,
-          imageUrl,
-          ingredients,
-          steps,
-        });
+        setRecipes(fetchedRecipes);
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === assistantMessageId ? { ...msg, content: `Found ${fetchedRecipes.length} recipe(s).` } : msg
+          )
+        );
+      } catch (e) {
+        console.error("Failed to parse JSON:", e);
+        setAssistantTextMessage("Sorry, I received recipe data in a format I couldn't understand. Please try again.");
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === assistantMessageId ? { ...msg, content: "Error: Invalid JSON format." } : msg
+          )
+        );
       }
-
-      setRecipes(fetchedRecipes);
+    } else if (finalResponse.startsWith('text')) {
+      const textContent = finalResponse.substring(4).trim();
+      setAssistantTextMessage(textContent);
       setMessages((prev) =>
         prev.map((msg) =>
-          msg.id === assistantMessageId ? { ...msg, content: "" } : msg
+          msg.id === assistantMessageId ? { ...msg, content: textContent } : msg
         )
       );
-    } catch (e) {
-      console.error("Failed to parse JSON response:", e);
+    } else {
+      setAssistantTextMessage(finalResponse || "Sorry, I couldn't generate a response. Please try again.");
       setMessages((prev) =>
         prev.map((msg) =>
-          msg.id === assistantMessageId ? { ...msg, content: `Error: Could not parse recipe information. Raw response: ${assistantResponse}` } : msg
+          msg.id === assistantMessageId ? { ...msg, content: finalResponse } : msg
         )
       );
-    } finally {
-      setIsGenerating(false);
     }
+
+    setIsGenerating(false);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -150,9 +147,10 @@ export default function FlavorFlow() {
   const userMessages = messages.filter((msg) => msg.role === 'user');
 
   const suggestions = [
-    "Suggest a recipe using chicken, broccoli, and rice.",
-    "I have eggs, cheese, and bread. What can I make for breakfast?",
-    "Give me a recipe for a quick and healthy dinner.",
+    "I have chicken, rice, and vegetables. What can I make for dinner?",
+    "I'm craving comfort food. I have potatoes, cheese, and bacon.",
+    "Suggest a healthy lunch using salmon, sweet potato, and greens.",
+    "What's a simple Thai recipe I can make at home?",
   ];
 
   const append = (message: { role: "user"; content: string }) => {
@@ -184,9 +182,6 @@ export default function FlavorFlow() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 isGenerating={isGenerating}
-                allowAttachments
-                files={files}
-                setFiles={setFiles}
               />
             )}
           </ChatForm>
@@ -197,6 +192,7 @@ export default function FlavorFlow() {
       <div className="flex flex-col w-1/2 h-full p-4">
         <h2 className="text-2xl font-bold mb-4 flex-shrink-0">Our <span className="underline decoration-amber-500">Flavors</span></h2>
         <div className="flex-grow overflow-y-auto pr-2">
+          {/* MODIFIED: Conditional rendering logic */}
           {selectedRecipe ? (
             <RecipeDetail recipe={selectedRecipe} onClose={() => setSelectedRecipe(null)} />
           ) : recipes.length > 0 ? (
@@ -204,6 +200,10 @@ export default function FlavorFlow() {
               {recipes.map((recipe, index) => (
                 <RecipeCard key={index} recipe={recipe} onClick={setSelectedRecipe} />
               ))}
+            </div>
+          ) : assistantTextMessage ? ( // ADDED: Condition to show text message
+            <div className="p-4 bg-muted rounded-lg prose prose-sm max-w-none">
+              <p>{assistantTextMessage}</p>
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
