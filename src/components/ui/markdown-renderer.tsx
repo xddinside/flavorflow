@@ -2,6 +2,8 @@ import React, { Suspense } from "react"
 import Markdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 
+import rehypeRaw from "rehype-raw"
+
 import { cn } from "@/lib/utils"
 import { CopyButton } from "@/components/ui/copy-button"
 
@@ -12,7 +14,7 @@ interface MarkdownRendererProps {
 export function MarkdownRenderer({ children }: MarkdownRendererProps) {
   return (
     <div className="space-y-3">
-      <Markdown remarkPlugins={[remarkGfm]} components={COMPONENTS}>
+      <Markdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]} components={COMPONENTS}>
         {children}
       </Markdown>
     </div>

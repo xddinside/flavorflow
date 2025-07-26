@@ -1,5 +1,7 @@
 'use client';
 import React, { useState } from 'react';
+import { Recipe, RecipeCard } from './RecipeCard';
+import { RecipeDetail } from './RecipeDetail';
 import { ChatMessages, ChatForm } from '@/components/ui/chat';
 import { Message } from '@/components/ui/chat-message';
 import { MessageInput } from '@/components/ui/message-input';
@@ -11,6 +13,8 @@ export default function FlavorFlow() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
 
   const sendChatMessage = async (content: string) => {
     if (!content.trim()) return;
@@ -44,14 +48,98 @@ export default function FlavorFlow() {
       done = readerDone;
       const chunk = decoder.decode(value, { stream: true });
       assistantResponse += chunk;
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === assistantMessageId ? { ...msg, content: assistantResponse } : msg
-        )
-      );
     }
 
-    setIsGenerating(false);
+
+    try {
+      const cleanedResponse = assistantResponse.replace(/^```json\n|\n```$/g, '');
+      const jsonResponse = JSON.parse(cleanedResponse);
+      const fetchedRecipes: Recipe[] = [];
+
+      if (Array.isArray(jsonResponse)) {
+        for (const recipeData of jsonResponse) {
+          const recipeName = recipeData.recipeName || "";
+          const description = recipeData.description || "";
+          const ingredients = recipeData.ingredients || [];
+          const steps = recipeData.steps || [];
+          let imageUrl = `https://via.placeholder.com/300x200?text=${encodeURIComponent(recipeName || description)}`;
+
+          // Fetch image for the current recipe
+          if (description) {
+            try {
+              const response = await fetch("/api/generate-image", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ description: description }),
+              });
+              const data = await response.json();
+              if (data.imageUrl) {
+                imageUrl = data.imageUrl;
+              }
+            } catch (error) {
+              console.error("Error generating image for recipe:", error);
+            }
+          }
+          fetchedRecipes.push({
+            recipeName,
+            description,
+            imageUrl,
+            ingredients,
+            steps,
+          });
+        }
+      } else {
+        // Fallback for single object if array is not returned
+        const recipeName = jsonResponse.recipeName || "";
+        const description = jsonResponse.description || "";
+        const ingredients = jsonResponse.ingredients || [];
+        const steps = jsonResponse.steps || [];
+        let imageUrl = `https://via.placeholder.com/300x200?text=${encodeURIComponent(recipeName || description)}`;
+
+        if (description) {
+          try {
+            const response = await fetch("/api/generate-image", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ description: description }),
+            });
+            const data = await response.json();
+            if (data.imageUrl) {
+              imageUrl = data.imageUrl;
+            }
+          } catch (error) {
+            console.error("Error generating image for recipe:", error);
+          }
+        }
+        fetchedRecipes.push({
+          recipeName,
+          description,
+          imageUrl,
+          ingredients,
+          steps,
+        });
+      }
+
+      setRecipes(fetchedRecipes);
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === assistantMessageId ? { ...msg, content: "" } : msg
+        )
+      );
+    } catch (e) {
+      console.error("Failed to parse JSON response:", e);
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === assistantMessageId ? { ...msg, content: `Error: Could not parse recipe information. Raw response: ${assistantResponse}` } : msg
+        )
+      );
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -60,7 +148,6 @@ export default function FlavorFlow() {
   };
 
   const userMessages = messages.filter((msg) => msg.role === 'user');
-  const assistantMessages = messages.filter((msg) => msg.role === 'assistant');
 
   const suggestions = [
     "Suggest a recipe using chicken, broccoli, and rice.",
@@ -108,22 +195,22 @@ export default function FlavorFlow() {
 
       {/* Right side */}
       <div className="flex flex-col w-1/2 h-full p-4">
-        <h2 className="text-2xl font-bold mb-4 flex-shrink-0">Your <span className="underline decoration-amber-500">Flavors</span></h2>
+        <h2 className="text-2xl font-bold mb-4 flex-shrink-0">Our <span className="underline decoration-amber-500">Flavors</span></h2>
         <div className="flex-grow overflow-y-auto pr-2">
-          {assistantMessages.length === 0 ? (
+          {selectedRecipe ? (
+            <RecipeDetail recipe={selectedRecipe} onClose={() => setSelectedRecipe(null)} />
+          ) : recipes.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {recipes.map((recipe, index) => (
+                <RecipeCard key={index} recipe={recipe} onClick={setSelectedRecipe} />
+              ))}
+            </div>
+          ) : (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
               <Sparkles className="w-16 h-16 mb-4 text-primary" />
               <p className="text-lg">Start typing on the left to get started.</p>
               <p className="text-sm">Or try some ideas on the left.</p>
             </div>
-          ) : (
-            <ChatMessages messages={assistantMessages}>
-              <MessageList
-                messages={assistantMessages}
-                isTyping={isGenerating}
-                align="right"
-              />
-            </ChatMessages>
           )}
         </div>
       </div>

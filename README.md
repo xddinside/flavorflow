@@ -6,7 +6,7 @@
 
 ### Test Prompts
 
-I have some rice, lentils, and classic indian masala, ginger. I also have bread, cheese, butter and sauces like ketchup, mayonnaise, and chipotle sauce. what can I make that'd be filling?
+I have some rice, lentils, and classic indian masala, ginger. I also have bread, cheese, butter and sauces like ketchup, mayonnaise, and chipotle sauce. what should i make for dinner, something that'd be filling?
 
 ### Stuff to implement
 
