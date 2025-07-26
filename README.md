@@ -1,36 +1,25 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+### PROJECT SCOPE
 
-## Getting Started
+- User can enter ingredients that they have and want to cook with or a specific dish they want to make. (The ui will on the left side for user)
+- Our chatbot will return with recipes related to the user's queries, with their images.
+- User can click on one of the recipes, making it expand and take the entire screen, and showing the entire recipe including all it's steps.
 
-First, run the development server:
+### Test Prompts
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+I have some rice, lentils, and classic indian masala, ginger. I also have bread, cheese, butter and sauces like ketchup, mayonnaise, and chipotle sauce. what can I make that'd be filling?
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Stuff to implement
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Make it scroll on both sides left and right to the latest message streamed.
+- On the response, respond always with 3 recipes. 
+- show only the recipe name and the image and maybe a line or two explaining the dish.
+- on clicking the recipe name or the image, expand that recipe to fullscreen and show the entire recipe including all the steps.
+- improve the prompts suggested.
+- make the UI better, add more color (amber)
+- make the responses look cleaner and intuitive
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Login / Auth (kinde)
+- Chat History
+- Connect to DB for history (Neon)
+- Deploy on vercel
