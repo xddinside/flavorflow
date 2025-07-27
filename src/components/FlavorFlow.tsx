@@ -28,10 +28,9 @@ export default function FlavorFlow() {
   useEffect(() => {
     const loadedChats = loadChats();
     setChats(loadedChats);
-    if (Object.keys(loadedChats).length > 0) {
-      setActiveChatId(Object.keys(loadedChats)[0]);
-    } else {
-      createNewChat();
+    const sortedChats = Object.values(loadedChats).sort((a, b) => b.createdAt - a.createdAt);
+    if (sortedChats.length > 0) {
+      setActiveChatId(sortedChats[0].id);
     }
   }, []);
 
@@ -63,38 +62,48 @@ export default function FlavorFlow() {
     }
   };
 
-  const updateMessages = (newMessages: Message[]) => {
-      if (activeChatId) {
-          setChats(prev => ({
-              ...prev,
-              [activeChatId]: {
-                  ...prev[activeChatId],
-                  messages: newMessages,
-              }
-          }))
-      }
-  }
-
   const sendChatMessage = async (content: string) => {
-    if (!content.trim() || !activeChatId) return;
+    if (!content.trim()) return;
+
+    let targetChatId = activeChatId;
+    let messagesForChat = messages;
+
+    // If there's no active chat, create one.
+    if (!targetChatId) {
+      const newChatId = Date.now().toString();
+      const newChat: ChatSession = {
+        id: newChatId,
+        title: content.substring(0, 30),
+        messages: [],
+        createdAt: Date.now(),
+      };
+      setChats(prev => ({ [newChatId]: newChat, ...prev }));
+      setActiveChatId(newChatId);
+      targetChatId = newChatId;
+      messagesForChat = [];
+    } else if (messagesForChat.length === 0) {
+      // Update title for an existing, but empty, chat on its first message.
+      setChats(prev => ({
+        ...prev,
+        [targetChatId!]: { ...prev[targetChatId!], title: content.substring(0, 30) }
+      }));
+    }
 
     const userMessage: Message = { id: Date.now().toString(), role: 'user', content: content };
-    const updatedMessages = [...messages, userMessage];
-    updateMessages(updatedMessages);
+    const updatedMessages = [...messagesForChat, userMessage];
+
+    // Update messages for the target chat.
+    setChats(prev => ({
+      ...prev,
+      [targetChatId!]: {
+        ...prev[targetChatId!],
+        messages: updatedMessages,
+      }
+    }));
 
     setInput('');
     setIsGenerating(true);
     setSelectedRecipe(null);
-
-    if (messages.length === 0) {
-        setChats(prev => ({
-            ...prev,
-            [activeChatId]: {
-                ...prev[activeChatId],
-                title: content.substring(0, 30),
-            }
-        }))
-    }
 
     const res = await fetch('/api/chat', {
       method: 'POST',
@@ -113,8 +122,11 @@ export default function FlavorFlow() {
     let assistantResponse = '';
     const assistantMessageId = (Date.now() + 1).toString();
 
-    const currentMessages = [...updatedMessages, { id: assistantMessageId, role: 'assistant', content: '' }];
-    updateMessages(currentMessages);
+    const messagesWithPlaceholder = [...updatedMessages, { id: assistantMessageId, role: 'assistant', content: '' }];
+    setChats(prev => ({
+      ...prev,
+      [targetChatId!]: { ...prev[targetChatId!], messages: messagesWithPlaceholder }
+    }));
 
 
     while (!done) {
@@ -127,10 +139,13 @@ export default function FlavorFlow() {
     const finalResponse = assistantResponse.trim();
 
     const updateAssistantMessage = (content: string) => {
-        const finalMessages = currentMessages.map(msg =>
-            msg.id === assistantMessageId ? { ...msg, content } : msg
-        );
-        updateMessages(finalMessages);
+      const finalMessages = messagesWithPlaceholder.map(msg =>
+        msg.id === assistantMessageId ? { ...msg, content } : msg
+      );
+      setChats(prev => ({
+        ...prev,
+        [targetChatId!]: { ...prev[targetChatId!], messages: finalMessages }
+      }));
     }
 
 
@@ -138,7 +153,7 @@ export default function FlavorFlow() {
       const textContent = finalResponse.substring(4).trim();
       updateAssistantMessage(textContent);
     } else if (finalResponse.startsWith('json') || finalResponse.startsWith('```json')) {
-        let jsonString = '';
+      let jsonString = '';
       if (finalResponse.startsWith('```json')) {
         jsonString = finalResponse.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
       } else {
@@ -179,8 +194,8 @@ export default function FlavorFlow() {
             steps: recipeData.steps || [],
           });
         }
-        if (activeChatId) {
-            saveRecipes(activeChatId, fetchedRecipes);
+        if (targetChatId) {
+            saveRecipes(targetChatId, fetchedRecipes);
         }
         updateAssistantMessage(`Found ${fetchedRecipes.length} recipe(s).`);
       } catch (e) {
