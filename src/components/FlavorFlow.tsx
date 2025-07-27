@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { Recipe, RecipeCard } from './RecipeCard';
 import { RecipeDetail } from './RecipeDetail';
 import { ChatMessages, ChatForm } from '@/components/ui/chat';
@@ -17,6 +18,8 @@ export default function FlavorFlow() {
   const [input, setInput] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarPinned, setIsSidebarPinned] = useState(false);
 
   const activeChat = activeChatId ? chats[activeChatId] : null;
   const messages = activeChat?.messages || [];
@@ -46,7 +49,7 @@ export default function FlavorFlow() {
       messages: [],
       createdAt: Date.now(),
     };
-    setChats(prev => ({ ...prev, [newChatId]: newChat }));
+    setChats(prev => ({ [newChatId]: newChat, ...prev }));
     setActiveChatId(newChatId);
   };
 
@@ -61,15 +64,15 @@ export default function FlavorFlow() {
   };
 
   const updateMessages = (newMessages: Message[]) => {
-    if (activeChatId) {
-      setChats(prev => ({
-        ...prev,
-        [activeChatId]: {
-          ...prev[activeChatId],
-          messages: newMessages,
-        }
-      }))
-    }
+      if (activeChatId) {
+          setChats(prev => ({
+              ...prev,
+              [activeChatId]: {
+                  ...prev[activeChatId],
+                  messages: newMessages,
+              }
+          }))
+      }
   }
 
   const sendChatMessage = async (content: string) => {
@@ -84,13 +87,13 @@ export default function FlavorFlow() {
     setSelectedRecipe(null);
 
     if (messages.length === 0) {
-      setChats(prev => ({
-        ...prev,
-        [activeChatId]: {
-          ...prev[activeChatId],
-          title: content.substring(0, 30),
-        }
-      }))
+        setChats(prev => ({
+            ...prev,
+            [activeChatId]: {
+                ...prev[activeChatId],
+                title: content.substring(0, 30),
+            }
+        }))
     }
 
     const res = await fetch('/api/chat', {
@@ -124,10 +127,10 @@ export default function FlavorFlow() {
     const finalResponse = assistantResponse.trim();
 
     const updateAssistantMessage = (content: string) => {
-      const finalMessages = currentMessages.map(msg =>
-        msg.id === assistantMessageId ? { ...msg, content } : msg
-      );
-      updateMessages(finalMessages);
+        const finalMessages = currentMessages.map(msg =>
+            msg.id === assistantMessageId ? { ...msg, content } : msg
+        );
+        updateMessages(finalMessages);
     }
 
 
@@ -135,7 +138,7 @@ export default function FlavorFlow() {
       const textContent = finalResponse.substring(4).trim();
       updateAssistantMessage(textContent);
     } else if (finalResponse.startsWith('json') || finalResponse.startsWith('```json')) {
-      let jsonString = '';
+        let jsonString = '';
       if (finalResponse.startsWith('```json')) {
         jsonString = finalResponse.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
       } else {
@@ -177,7 +180,7 @@ export default function FlavorFlow() {
           });
         }
         if (activeChatId) {
-          saveRecipes(activeChatId, fetchedRecipes);
+            saveRecipes(activeChatId, fetchedRecipes);
         }
         updateAssistantMessage(`Found ${fetchedRecipes.length} recipe(s).`);
       } catch (e) {
@@ -207,19 +210,27 @@ export default function FlavorFlow() {
     sendChatMessage(message.content);
   };
 
+  const isSidebarExpanded = isSidebarOpen || isSidebarPinned;
+
   return (
     <div className="flex h-[calc(100vh-5rem)] w-full bg-background">
-      <div className="w-1/4 h-full">
-        <ChatHistory
-          chats={Object.values(chats).sort((a,b) => b.createdAt - a.createdAt)}
-          activeChatId={activeChatId}
-          onSelectChat={setActiveChatId}
-          onNewChat={createNewChat}
-          onDeleteChat={deleteChat}
-        />
-      </div>
+      <ChatHistory
+        chats={Object.values(chats).sort((a,b) => b.createdAt - a.createdAt)}
+        activeChatId={activeChatId}
+        onSelectChat={setActiveChatId}
+        onNewChat={createNewChat}
+        onDeleteChat={deleteChat}
+        isOpen={isSidebarOpen}
+        setIsOpen={setIsSidebarOpen}
+        isPinned={isSidebarPinned}
+        onTogglePin={() => setIsSidebarPinned(!isSidebarPinned)}
+      />
 
-      <div className="flex flex-col w-1/2 h-full p-4 border-r border-border">
+      <motion.div
+        animate={{ width: isSidebarExpanded ? 'calc(50% - 8rem)' : 'calc(50% - 2rem)' }}
+        transition={{ duration: 0.3, ease: 'easeInOut' }}
+        className="flex flex-col h-full p-4 border-r border-border"
+      >
         <h2 className="text-2xl font-bold mb-4 flex-shrink-0">Your <span className='text-amber-500'>Flow</span></h2>
         <div className="flex-grow overflow-y-auto p-4">
           {messages.length === 0 ? (
@@ -245,9 +256,13 @@ export default function FlavorFlow() {
             )}
           </ChatForm>
         </div>
-      </div>
+      </motion.div>
 
-      <div className="flex flex-col w-1/4 h-full p-4">
+      <motion.div
+        animate={{ width: isSidebarExpanded ? 'calc(50% - 8rem)' : 'calc(50% - 2rem)' }}
+        transition={{ duration: 0.3, ease: 'easeInOut' }}
+        className="flex flex-col h-full p-4"
+      >
         <h2 className="text-2xl font-bold mb-4 flex-shrink-0">Our <span className="underline decoration-amber-500">Flavors</span></h2>
         <div className="flex-grow overflow-y-auto p-4">
           {selectedRecipe ? (
@@ -266,7 +281,7 @@ export default function FlavorFlow() {
                 </div>
               )}
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
