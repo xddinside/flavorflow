@@ -8,52 +8,95 @@ import { MessageInput } from '@/components/ui/message-input';
 import { MessageList } from '@/components/ui/message-list';
 import { PromptSuggestions } from '@/components/ui/prompt-suggestions';
 import { Sparkles } from 'lucide-react';
-import { saveChatHistory, loadChatHistory, saveRecipes, loadRecipes } from '@/lib/chat-history';
+import { saveChats, loadChats, saveRecipes, loadRecipes, ChatSession } from '@/lib/chat-history';
+import { ChatHistory } from './ChatHistory';
 
 export default function FlavorFlow() {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [chats, setChats] = useState<Record<string, ChatSession>>({});
+  const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [input, setInput] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
-  const [assistantTextMessage, setAssistantTextMessage] = useState<string | null>(null);
+
+  const activeChat = activeChatId ? chats[activeChatId] : null;
+  const messages = activeChat?.messages || [];
+  const recipes = activeChatId ? loadRecipes(activeChatId) : [];
 
   useEffect(() => {
-    const history = loadChatHistory();
-    if (history.length > 0) {
-      setMessages(history);
-    }
-    const cachedRecipes = loadRecipes();
-    if (cachedRecipes.length > 0) {
-      setRecipes(cachedRecipes);
+    const loadedChats = loadChats();
+    setChats(loadedChats);
+    if (Object.keys(loadedChats).length > 0) {
+      setActiveChatId(Object.keys(loadedChats)[0]);
+    } else {
+      createNewChat();
     }
   }, []);
 
   useEffect(() => {
-    if (messages.length > 0) {
-      saveChatHistory(messages);
+    if (Object.keys(chats).length > 0) {
+      saveChats(chats);
     }
-  }, [messages]);
+  }, [chats]);
 
-  useEffect(() => {
-    if (recipes.length > 0) {
-      saveRecipes(recipes);
+  const createNewChat = () => {
+    const newChatId = Date.now().toString();
+    const newChat: ChatSession = {
+      id: newChatId,
+      title: 'New Chat',
+      messages: [],
+      createdAt: Date.now(),
+    };
+    setChats(prev => ({ ...prev, [newChatId]: newChat }));
+    setActiveChatId(newChatId);
+  };
+
+  const deleteChat = (chatId: string) => {
+    const newChats = { ...chats };
+    delete newChats[chatId];
+    setChats(newChats);
+    if (activeChatId === chatId) {
+      const remainingChatIds = Object.keys(newChats);
+      setActiveChatId(remainingChatIds.length > 0 ? remainingChatIds[0] : null);
     }
-  }, [recipes]);
+  };
 
-const sendChatMessage = async (content: string) => {
-    if (!content.trim()) return;
+  const updateMessages = (newMessages: Message[]) => {
+    if (activeChatId) {
+      setChats(prev => ({
+        ...prev,
+        [activeChatId]: {
+          ...prev[activeChatId],
+          messages: newMessages,
+        }
+      }))
+    }
+  }
+
+  const sendChatMessage = async (content: string) => {
+    if (!content.trim() || !activeChatId) return;
 
     const userMessage: Message = { id: Date.now().toString(), role: 'user', content: content };
-    setMessages((prev) => [...prev, userMessage]);
+    const updatedMessages = [...messages, userMessage];
+    updateMessages(updatedMessages);
+
     setInput('');
     setIsGenerating(true);
     setSelectedRecipe(null);
 
+    if (messages.length === 0) {
+      setChats(prev => ({
+        ...prev,
+        [activeChatId]: {
+          ...prev[activeChatId],
+          title: content.substring(0, 30),
+        }
+      }))
+    }
+
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: [...messages, userMessage] }),
+      body: JSON.stringify({ messages: updatedMessages }),
     });
 
     if (!res.body) {
@@ -67,7 +110,9 @@ const sendChatMessage = async (content: string) => {
     let assistantResponse = '';
     const assistantMessageId = (Date.now() + 1).toString();
 
-    setMessages((prev) => [...prev, { id: assistantMessageId, role: 'assistant', content: '' }]);
+    const currentMessages = [...updatedMessages, { id: assistantMessageId, role: 'assistant', content: '' }];
+    updateMessages(currentMessages);
+
 
     while (!done) {
       const { value, done: readerDone } = await reader.read();
@@ -75,16 +120,20 @@ const sendChatMessage = async (content: string) => {
       const chunk = decoder.decode(value, { stream: true });
       assistantResponse += chunk;
     }
-    
+
     const finalResponse = assistantResponse.trim();
+
+    const updateAssistantMessage = (content: string) => {
+      const finalMessages = currentMessages.map(msg =>
+        msg.id === assistantMessageId ? { ...msg, content } : msg
+      );
+      updateMessages(finalMessages);
+    }
+
 
     if (finalResponse.startsWith('text')) {
       const textContent = finalResponse.substring(4).trim();
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === assistantMessageId ? { ...msg, content: textContent } : msg
-        )
-      );
+      updateAssistantMessage(textContent);
     } else if (finalResponse.startsWith('json') || finalResponse.startsWith('```json')) {
       let jsonString = '';
       if (finalResponse.startsWith('```json')) {
@@ -127,31 +176,16 @@ const sendChatMessage = async (content: string) => {
             steps: recipeData.steps || [],
           });
         }
-        setRecipes(fetchedRecipes);
-        setAssistantTextMessage(null);
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === assistantMessageId ? { ...msg, content: `Found ${fetchedRecipes.length} recipe(s).` } : msg
-          )
-        );
+        if (activeChatId) {
+          saveRecipes(activeChatId, fetchedRecipes);
+        }
+        updateAssistantMessage(`Found ${fetchedRecipes.length} recipe(s).`);
       } catch (e) {
         console.error("Failed to parse JSON:", e);
-        setAssistantTextMessage("Sorry, I couldn't get that recipe for you. Please try again with a different request.");
-        setRecipes([]); 
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === assistantMessageId ? { ...msg, content: "Error: Invalid JSON format." } : msg
-          )
-        );
+        updateAssistantMessage("Error: Invalid JSON format.");
       }
     } else {
-      setAssistantTextMessage(finalResponse || "Sorry, I couldn't generate a response. Please try again.");
-      setRecipes([]); 
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === assistantMessageId ? { ...msg, content: finalResponse } : msg
-        )
-      );
+      updateAssistantMessage(finalResponse || "Sorry, I couldn't generate a response. Please try again.");
     }
 
     setIsGenerating(false);
@@ -161,8 +195,6 @@ const sendChatMessage = async (content: string) => {
     e.preventDefault();
     sendChatMessage(input);
   };
-
-  
 
   const suggestions = [
     "I have chicken, rice, and vegetables. What can I make for dinner?",
@@ -177,7 +209,16 @@ const sendChatMessage = async (content: string) => {
 
   return (
     <div className="flex h-[calc(100vh-5rem)] w-full bg-background">
-      {/* Left side */}
+      <div className="w-1/4 h-full">
+        <ChatHistory
+          chats={Object.values(chats).sort((a,b) => b.createdAt - a.createdAt)}
+          activeChatId={activeChatId}
+          onSelectChat={setActiveChatId}
+          onNewChat={createNewChat}
+          onDeleteChat={deleteChat}
+        />
+      </div>
+
       <div className="flex flex-col w-1/2 h-full p-4 border-r border-border">
         <h2 className="text-2xl font-bold mb-4 flex-shrink-0">Your <span className='text-amber-500'>Flow</span></h2>
         <div className="flex-grow overflow-y-auto p-4">
@@ -188,10 +229,10 @@ const sendChatMessage = async (content: string) => {
               suggestions={suggestions}
             />
           ) : (
-            <ChatMessages messages={messages}>
-              <MessageList messages={messages} align="left"/>
-            </ChatMessages>
-          )}
+              <ChatMessages messages={messages}>
+                <MessageList messages={messages} align="left"/>
+              </ChatMessages>
+            )}
         </div>
         <div className="flex-shrink-0 mt-4">
           <ChatForm handleSubmit={handleSubmit} isPending={isGenerating}>
@@ -206,26 +247,24 @@ const sendChatMessage = async (content: string) => {
         </div>
       </div>
 
-      {/* Right side */}
-      <div className="flex flex-col w-1/2 h-full p-4">
+      <div className="flex flex-col w-1/4 h-full p-4">
         <h2 className="text-2xl font-bold mb-4 flex-shrink-0">Our <span className="underline decoration-amber-500">Flavors</span></h2>
         <div className="flex-grow overflow-y-auto p-4">
-          {/* MODIFIED: Conditional rendering logic */}
           {selectedRecipe ? (
             <RecipeDetail recipe={selectedRecipe} onClose={() => setSelectedRecipe(null)} />
           ) : recipes.length > 0 ? (
-            <div className="flex flex-col gap-4">
-              {recipes.map((recipe, index) => (
-                <RecipeCard key={index} recipe={recipe} onClick={setSelectedRecipe} />
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-              <Sparkles className="w-16 h-16 mb-4 text-primary" />
-              <p className="text-lg">Start typing on the left to get started.</p>
-              <p className="text-sm">Or try some ideas on the left.</p>
-            </div>
-          )}
+              <div className="flex flex-col gap-4">
+                {recipes.map((recipe, index) => (
+                  <RecipeCard key={index} recipe={recipe} onClick={setSelectedRecipe} />
+                ))}
+              </div>
+            ) : (
+                <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                  <Sparkles className="w-16 h-16 mb-4 text-primary" />
+                  <p className="text-lg">Start typing to get started.</p>
+                  <p className="text-sm">Or try some ideas.</p>
+                </div>
+              )}
         </div>
       </div>
     </div>
