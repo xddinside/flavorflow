@@ -136,8 +136,8 @@ const sendChatMessage = async (content: string) => {
         );
       } catch (e) {
         console.error("Failed to parse JSON:", e);
-        setAssistantTextMessage("Sorry, I received recipe data in a format I couldn't understand. Please try again.");
-        setRecipes([]); // Clear recipes on JSON parse error
+        setAssistantTextMessage("Sorry, I couldn't get that recipe for you. Please try again with a different request.");
+        setRecipes([]); 
         setMessages((prev) =>
           prev.map((msg) =>
             msg.id === assistantMessageId ? { ...msg, content: "Error: Invalid JSON format." } : msg
@@ -146,7 +146,7 @@ const sendChatMessage = async (content: string) => {
       }
     } else {
       setAssistantTextMessage(finalResponse || "Sorry, I couldn't generate a response. Please try again.");
-      setRecipes([]); // Clear recipes for unknown response types
+      setRecipes([]); 
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === assistantMessageId ? { ...msg, content: finalResponse } : msg
@@ -176,11 +176,11 @@ const sendChatMessage = async (content: string) => {
   };
 
   return (
-    <div className="flex h-[calc(100vh-10rem)] w-full bg-background">
+    <div className="flex h-[calc(100vh-5rem)] w-full bg-background">
       {/* Left side */}
       <div className="flex flex-col w-1/2 h-full p-4 border-r border-border">
         <h2 className="text-2xl font-bold mb-4 flex-shrink-0">Your <span className='text-amber-500'>Flow</span></h2>
-        <div className="flex-grow overflow-y-auto pr-2">
+        <div className="flex-grow overflow-y-auto p-4">
           {messages.length === 0 ? (
             <PromptSuggestions
               label="Try these ideas ✨"
@@ -209,12 +209,12 @@ const sendChatMessage = async (content: string) => {
       {/* Right side */}
       <div className="flex flex-col w-1/2 h-full p-4">
         <h2 className="text-2xl font-bold mb-4 flex-shrink-0">Our <span className="underline decoration-amber-500">Flavors</span></h2>
-        <div className="flex-grow overflow-y-auto pr-2">
+        <div className="flex-grow overflow-y-auto p-4">
           {/* MODIFIED: Conditional rendering logic */}
           {selectedRecipe ? (
             <RecipeDetail recipe={selectedRecipe} onClose={() => setSelectedRecipe(null)} />
           ) : recipes.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="flex flex-col gap-4">
               {recipes.map((recipe, index) => (
                 <RecipeCard key={index} recipe={recipe} onClick={setSelectedRecipe} />
               ))}

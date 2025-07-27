@@ -71,7 +71,6 @@ export function Chat({
   const messagesRef = useRef(messages)
   messagesRef.current = messages
 
-  // Enhanced stop function that marks pending tool calls as cancelled
   const handleStop = useCallback(() => {
     stop?.()
 
@@ -97,7 +96,7 @@ export function Chat({
               state: "result",
               result: {
                 content: "Tool execution was cancelled",
-                __cancelled: true, // Special marker to indicate cancellation
+                __cancelled: true, 
               },
             } as const
           }

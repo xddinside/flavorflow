@@ -27,13 +27,11 @@ export async function POST(req: Request) {
 
   for (const apiKey of apiKeys) {
     try {
-      // 2. Create a new Google AI provider instance with the current key
       const google = createGoogleGenerativeAI({
         apiKey: apiKey,
       });
 
       const result = streamText({
-        // model: google('gemini-1.5-flash-latest'),
         model: google('gemini-1.5-flash-latest'),
         messages: [
           {
