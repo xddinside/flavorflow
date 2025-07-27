@@ -94,11 +94,11 @@ export default function FlavorFlow() {
 
     // Update messages for the target chat.
     setChats(prev => ({
-      ...prev,
-      [targetChatId!]: {
-        ...prev[targetChatId!],
-        messages: updatedMessages,
-      }
+        ...prev,
+        [targetChatId!]: {
+            ...prev[targetChatId!],
+            messages: updatedMessages,
+        }
     }));
 
     setInput('');
@@ -124,8 +124,8 @@ export default function FlavorFlow() {
 
     const messagesWithPlaceholder = [...updatedMessages, { id: assistantMessageId, role: 'assistant', content: '' }];
     setChats(prev => ({
-      ...prev,
-      [targetChatId!]: { ...prev[targetChatId!], messages: messagesWithPlaceholder }
+        ...prev,
+        [targetChatId!]: { ...prev[targetChatId!], messages: messagesWithPlaceholder }
     }));
 
 
@@ -139,28 +139,24 @@ export default function FlavorFlow() {
     const finalResponse = assistantResponse.trim();
 
     const updateAssistantMessage = (content: string) => {
-      const finalMessages = messagesWithPlaceholder.map(msg =>
-        msg.id === assistantMessageId ? { ...msg, content } : msg
-      );
-      setChats(prev => ({
-        ...prev,
-        [targetChatId!]: { ...prev[targetChatId!], messages: finalMessages }
-      }));
+        const finalMessages = messagesWithPlaceholder.map(msg =>
+            msg.id === assistantMessageId ? { ...msg, content } : msg
+        );
+        setChats(prev => ({
+            ...prev,
+            [targetChatId!]: { ...prev[targetChatId!], messages: finalMessages }
+        }));
     }
 
-
-    if (finalResponse.startsWith('text')) {
-      const textContent = finalResponse.substring(4).trim();
-      updateAssistantMessage(textContent);
-    } else if (finalResponse.startsWith('json') || finalResponse.startsWith('```json')) {
-      let jsonString = '';
-      if (finalResponse.startsWith('```json')) {
-        jsonString = finalResponse.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
-      } else {
-        jsonString = finalResponse.substring(4).trim();
-      }
+    if (finalResponse.includes('|||')) {
+      const [textPart, jsonPart] = finalResponse.split('|||');
+      updateAssistantMessage(textPart.trim());
 
       try {
+        let jsonString = jsonPart.trim();
+        if (jsonString.startsWith('```json')) {
+          jsonString = jsonString.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
+        }
         const jsonResponse = JSON.parse(jsonString);
         const fetchedRecipes: Recipe[] = [];
         const recipesData = Array.isArray(jsonResponse) ? jsonResponse : [jsonResponse];
@@ -197,10 +193,9 @@ export default function FlavorFlow() {
         if (targetChatId) {
             saveRecipes(targetChatId, fetchedRecipes);
         }
-        updateAssistantMessage(`Found ${fetchedRecipes.length} recipe(s).`);
       } catch (e) {
         console.error("Failed to parse JSON:", e);
-        updateAssistantMessage("Error: Invalid JSON format.");
+        updateAssistantMessage("Error: I received a recipe in an invalid format.");
       }
     } else {
       updateAssistantMessage(finalResponse || "Sorry, I couldn't generate a response. Please try again.");
