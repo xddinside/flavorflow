@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Recipe, RecipeCard } from './RecipeCard';
 import { RecipeDetail } from './RecipeDetail';
 import { ChatMessages, ChatForm } from '@/components/ui/chat';
@@ -8,6 +8,7 @@ import { MessageInput } from '@/components/ui/message-input';
 import { MessageList } from '@/components/ui/message-list';
 import { PromptSuggestions } from '@/components/ui/prompt-suggestions';
 import { Sparkles } from 'lucide-react';
+import { saveChatHistory, loadChatHistory, saveRecipes, loadRecipes } from '@/lib/chat-history';
 
 export default function FlavorFlow() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -15,8 +16,30 @@ export default function FlavorFlow() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
-  // ADDED: State to hold plain text responses from the assistant
   const [assistantTextMessage, setAssistantTextMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const history = loadChatHistory();
+    if (history.length > 0) {
+      setMessages(history);
+    }
+    const cachedRecipes = loadRecipes();
+    if (cachedRecipes.length > 0) {
+      setRecipes(cachedRecipes);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      saveChatHistory(messages);
+    }
+  }, [messages]);
+
+  useEffect(() => {
+    if (recipes.length > 0) {
+      saveRecipes(recipes);
+    }
+  }, [recipes]);
 
 const sendChatMessage = async (content: string) => {
     if (!content.trim()) return;
@@ -25,8 +48,6 @@ const sendChatMessage = async (content: string) => {
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setIsGenerating(true);
-    setRecipes([]);
-    setAssistantTextMessage(null);
     setSelectedRecipe(null);
 
     const res = await fetch('/api/chat', {
@@ -55,21 +76,23 @@ const sendChatMessage = async (content: string) => {
       assistantResponse += chunk;
     }
     
-    // MODIFIED: Logic to handle both markdown-fenced and regular JSON
     const finalResponse = assistantResponse.trim();
-    let isJson = false;
-    let jsonString = '';
 
-    if (finalResponse.startsWith('```json')) {
-      isJson = true;
-      // Extracts content from between the markdown fences
-      jsonString = finalResponse.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
-    } else if (finalResponse.startsWith('json')) {
-      isJson = true;
-      jsonString = finalResponse.substring(4).trim();
-    }
+    if (finalResponse.startsWith('text')) {
+      const textContent = finalResponse.substring(4).trim();
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === assistantMessageId ? { ...msg, content: textContent } : msg
+        )
+      );
+    } else if (finalResponse.startsWith('json') || finalResponse.startsWith('```json')) {
+      let jsonString = '';
+      if (finalResponse.startsWith('```json')) {
+        jsonString = finalResponse.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
+      } else {
+        jsonString = finalResponse.substring(4).trim();
+      }
 
-    if (isJson) {
       try {
         const jsonResponse = JSON.parse(jsonString);
         const fetchedRecipes: Recipe[] = [];
@@ -105,6 +128,7 @@ const sendChatMessage = async (content: string) => {
           });
         }
         setRecipes(fetchedRecipes);
+        setAssistantTextMessage(null);
         setMessages((prev) =>
           prev.map((msg) =>
             msg.id === assistantMessageId ? { ...msg, content: `Found ${fetchedRecipes.length} recipe(s).` } : msg
@@ -113,22 +137,16 @@ const sendChatMessage = async (content: string) => {
       } catch (e) {
         console.error("Failed to parse JSON:", e);
         setAssistantTextMessage("Sorry, I received recipe data in a format I couldn't understand. Please try again.");
+        setRecipes([]); // Clear recipes on JSON parse error
         setMessages((prev) =>
           prev.map((msg) =>
             msg.id === assistantMessageId ? { ...msg, content: "Error: Invalid JSON format." } : msg
           )
         );
       }
-    } else if (finalResponse.startsWith('text')) {
-      const textContent = finalResponse.substring(4).trim();
-      setAssistantTextMessage(textContent);
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === assistantMessageId ? { ...msg, content: textContent } : msg
-        )
-      );
     } else {
       setAssistantTextMessage(finalResponse || "Sorry, I couldn't generate a response. Please try again.");
+      setRecipes([]); // Clear recipes for unknown response types
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === assistantMessageId ? { ...msg, content: finalResponse } : msg
@@ -144,7 +162,7 @@ const sendChatMessage = async (content: string) => {
     sendChatMessage(input);
   };
 
-  const userMessages = messages.filter((msg) => msg.role === 'user');
+  
 
   const suggestions = [
     "I have chicken, rice, and vegetables. What can I make for dinner?",
@@ -163,15 +181,15 @@ const sendChatMessage = async (content: string) => {
       <div className="flex flex-col w-1/2 h-full p-4 border-r border-border">
         <h2 className="text-2xl font-bold mb-4 flex-shrink-0">Your <span className='text-amber-500'>Flow</span></h2>
         <div className="flex-grow overflow-y-auto pr-2">
-          {userMessages.length === 0 ? (
+          {messages.length === 0 ? (
             <PromptSuggestions
               label="Try these ideas ✨"
               append={append}
               suggestions={suggestions}
             />
           ) : (
-            <ChatMessages messages={userMessages}>
-              <MessageList messages={userMessages} align="left"/>
+            <ChatMessages messages={messages}>
+              <MessageList messages={messages} align="left"/>
             </ChatMessages>
           )}
         </div>
@@ -200,10 +218,6 @@ const sendChatMessage = async (content: string) => {
               {recipes.map((recipe, index) => (
                 <RecipeCard key={index} recipe={recipe} onClick={setSelectedRecipe} />
               ))}
-            </div>
-          ) : assistantTextMessage ? ( // ADDED: Condition to show text message
-            <div className="p-4 bg-muted rounded-lg prose prose-sm max-w-none">
-              <p>{assistantTextMessage}</p>
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
