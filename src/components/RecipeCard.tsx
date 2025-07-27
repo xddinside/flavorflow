@@ -17,7 +17,7 @@ interface RecipeCardProps {
 export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onClick }) => {
   return (
     <div
-      className="cursor-pointer rounded-lg shadow-md overflow-hidden transform hover:scale-105 flex flex-row bg-card hover:shadow-lg transition-all duration-300 ease-in-out"
+      className="cursor-pointer rounded-lg shadow-md overflow-hidden transform hover:scale-105 flex flex-row bg-card hover:bg-muted hover:shadow-lg transition-all duration-300 ease-in-out border border-primary-background/20"
       onClick={() => onClick(recipe)}
     >
       <div className="relative w-40 h-40 flex-shrink-0">
@@ -28,7 +28,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onClick }) => {
           objectFit="cover"
           className="rounded-l-lg"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent rounded-l-lg"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-l-lg"></div>
       </div>
       <div className="p-4 flex flex-col justify-center flex-grow">
         <h3 className="text-lg font-semibold mb-1 text-card-foreground">{recipe.recipeName}</h3>

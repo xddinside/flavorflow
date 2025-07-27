@@ -212,7 +212,6 @@ export default function FlavorFlow() {
   const suggestions = [
     "I have chicken, rice, and vegetables. What can I make for dinner?",
     "I'm craving comfort food. I have potatoes, cheese, and bacon.",
-    "Suggest a healthy lunch using salmon, sweet potato, and greens.",
     "What's a simple Thai recipe I can make at home?",
   ];
 
@@ -239,7 +238,7 @@ export default function FlavorFlow() {
       <motion.div
         animate={{ width: isSidebarExpanded ? 'calc(50% - 8rem)' : 'calc(50% - 2rem)' }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
-        className="flex flex-col h-full p-4 border-r border-border"
+        className="flex flex-col h-full p-4 border-r border-border dark:hover:bg-card/20"
       >
         <h2 className="text-2xl font-bold mb-4 flex-shrink-0">Your <span className='text-amber-500'>Flow</span></h2>
         <div className="flex-grow overflow-y-auto p-4">
@@ -271,7 +270,7 @@ export default function FlavorFlow() {
       <motion.div
         animate={{ width: isSidebarExpanded ? 'calc(50% - 8rem)' : 'calc(50% - 2rem)' }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
-        className="flex flex-col h-full p-4"
+        className="flex flex-col h-full p-4 dark:hover:bg-card/20"
       >
         <h2 className="text-2xl font-bold mb-4 flex-shrink-0">Our <span className="underline decoration-amber-500">Flavors</span></h2>
         <div className="flex-grow overflow-y-auto p-4">

@@ -2,6 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChatSession } from '@/lib/chat-history';
 import { Menu, Plus, MessageSquare, X } from 'lucide-react';
+import { Button } from './ui/button';
 
 interface ChatHistoryProps {
   chats: ChatSession[];
@@ -34,14 +35,14 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({ chats, activeChatId, o
       animate={isExpanded ? 'open' : 'closed'}
       variants={sidebarVariants}
       transition={{ duration: 0.3, ease: 'easeInOut' }}
-      className="flex flex-col h-full p-2 border-r border-border bg-muted/50"
+      className="flex flex-col h-full p-2 border-r border-border dark:bg-stone-900/10 dark:hover:bg-card/30 hover:bg-neutral-200/20"
       onMouseLeave={() => !isPinned && setIsOpen(false)}
     >
       {/* Header */}
       <div className="relative flex items-center justify-center h-10 mb-2">
         <button
           onClick={onTogglePin}
-          className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded hover:bg-accent"
+          className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded hover:bg-neutral-200/50 dark:hover:bg-stone-800"
         >
           <Menu size={20} />
         </button>
@@ -54,9 +55,9 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({ chats, activeChatId, o
                     animate="visible"
                     exit="hidden"
                     transition={{duration: 0.2}}
-                    className="font-bold"
+                    className="text-xl font-semibold"
                 >
-                    History
+                    Flows
                 </motion.span>
             )}
         </AnimatePresence>
@@ -67,9 +68,9 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({ chats, activeChatId, o
         className="flex flex-col flex-grow"
         onMouseEnter={() => !isPinned && setIsOpen(true)}
       >
-        <button
+        <Button
           onClick={onNewChat}
-          className="mb-4 w-full flex items-center justify-start p-2 text-white bg-primary rounded-lg hover:bg-primary/90"
+          className="mb-4 mt-1 justify-start p-2 dark:bg-primary dark:hover:bg-primary/85"
         >
           <Plus size={20} className="shrink-0" />
           <AnimatePresence>
@@ -81,20 +82,20 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({ chats, activeChatId, o
                       animate="visible"
                       exit="hidden"
                       transition={{duration: 0.2}}
-                      className="ml-2"
+                      className="ml-7"
                   >
                       Create New Chat
                   </motion.span>
               )}
           </AnimatePresence>
-        </button>
+        </Button>
 
         <div className="flex-grow overflow-y-auto overflow-x-hidden">
           {chats.map((chat) => (
             <div
               key={chat.id}
               className={`flex items-center p-2 rounded-lg cursor-pointer my-1 ${
-                chat.id === activeChatId ? 'bg-accent' : 'hover:bg-accent/50'
+                chat.id === activeChatId ? 'bg-neutral-200/50 dark:bg-stone-800' : 'hover:bg-neutral-200/50  dark:hover:bg-stone-800/50'
               }`}
               onClick={() => onSelectChat(chat.id)}
             >
@@ -127,7 +128,7 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({ chats, activeChatId, o
                               e.stopPropagation();
                               onDeleteChat(chat.id);
                           }}
-                          className="ml-2 text-red-500 hover:text-red-700"
+                          className="ml-2 text-black/70 hover:text-black dark:text-white"
                       >
                           <X size={16}/>
                       </motion.button>

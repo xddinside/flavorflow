@@ -15,7 +15,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ recipe, onClose }) =
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      className="absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 "
       onClick={onClose}
     >
       <motion.div
