@@ -9,7 +9,7 @@ export async function POST(req: Request) {
     process.env.UNSPLASH_ACCESS_KEY_3,
     process.env.UNSPLASH_ACCESS_KEY_4,
     process.env.UNSPLASH_ACCESS_KEY_5,
-  ].filter(Boolean); // Filter out any undefined keys
+  ].filter(Boolean);
 
   if (UNSPLASH_ACCESS_KEYS.length === 0) {
     console.error('No Unsplash API keys found. Please set UNSPLASH_ACCESS_KEY_n environment variables.');
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
 
       if (unsplashResponse.status === 429 || (rateLimitRemaining && parseInt(rateLimitRemaining) === 0)) {
         console.warn(`Unsplash API key ${key.substring(0, 5)}... hit rate limit. Trying next key.`);
-        continue; // Try the next key
+        continue;
       }
 
       if (!unsplashResponse.ok) {
@@ -48,13 +48,12 @@ export async function POST(req: Request) {
       const data = await unsplashResponse.json();
 
       if (data.results && data.results.length > 0) {
-        imageUrl = data.results[0].urls.regular; // Use 'regular' or 'small' for better performance
+        imageUrl = data.results[0].urls.regular; 
         foundImage = true;
-        break; // Image found, stop trying keys
+        break; 
       }
     } catch (error) {
       console.error(`Error with Unsplash API key ${key.substring(0, 5)}...:`, error);
-      // Continue to next key if there's an error with the current one
     }
   }
 

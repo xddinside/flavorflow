@@ -12,6 +12,7 @@ export async function POST(req: Request) {
     process.env.GOOGLE_GENERATIVE_AI_API_KEY_2,
     process.env.GOOGLE_GENERATIVE_AI_API_KEY_3,
     process.env.GOOGLE_GENERATIVE_AI_API_KEY_4,
+    process.env.GOOGLE_GENERATIVE_AI_API_KEY_5,
   ].filter(Boolean) as string[];
 
   if (apiKeys.length === 0) {
