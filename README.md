@@ -78,6 +78,7 @@ Here are some features we're planning to add:
 * **Recipe History Carousel:** Instead of clearing recipes, allow users to scroll through the history of generated recipes within a chat.
 * **Cloud Sync & Auth:** Implement authentication (e.g., Kinde) and a database (e.g., Neon Postgres) to sync user chats, recipes, and bookmarks across devices.
 * **Shareable Recipes:** Allow users to share recipes or their favorites list with a unique link.
+* **Mobile Compatible:** Make the UI mobile compatible. Right now, it works nicely only with PC, laptops and tablets.
 
 ## 🤖 Disclaimer about AI usage
 
