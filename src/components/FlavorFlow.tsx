@@ -188,8 +188,6 @@ export default function FlavorFlow() {
           imageUrl,
           ingredients: recipeData.ingredients || [],
           steps: recipeData.steps || [],
-          prepTime: recipeData.prepTime || "N/A",
-          servings: recipeData.servings || 0,
         });
       }
       if (chatId) {
@@ -242,10 +240,8 @@ export default function FlavorFlow() {
     sendChatMessage(message.content);
   };
 
-  const isSidebarExpanded = isSidebarOpen || isSidebarPinned;
-
   return (
-    <div className="flex h-[calc(100vh-5rem)] w-full bg-background">
+    <div className="flex h-[calc(100vh-5rem)] w-full bg-background relative">
       <ChatHistory
         chats={Object.values(chats).sort((a,b) => b.createdAt - a.createdAt)}
         activeChatId={activeChatId}
@@ -259,59 +255,57 @@ export default function FlavorFlow() {
       />
 
       <motion.div
-        animate={{ width: isSidebarExpanded ? 'calc(50% - 8rem)' : 'calc(50% - 2rem)' }}
-        transition={{ duration: 0.3, ease: 'easeInOut' }}
-        className="flex flex-col h-full p-4 border-r border-border dark:hover:bg-card/20"
+        className="flex-1 flex"
+        animate={{ marginLeft: isSidebarPinned ? '16rem' : '4rem' }}
+        transition={{ type: 'spring', stiffness: 400, damping: 40 }}
       >
-        <h2 className="text-2xl font-bold mb-4 flex-shrink-0">Your <span className='text-amber-500'>Flow</span></h2>
-        <div className="flex-grow overflow-y-auto p-4" ref={containerRef}>
-          {messages.length === 0 ? (
-            <PromptSuggestions
-              label="Try these ideas ✨"
-              append={append}
-              suggestions={suggestions}
-            />
-          ) : (
-              <ChatMessages messages={messages}>
-                <MessageList messages={messages} isTyping={isGenerating}/>
-              </ChatMessages>
-            )}
-        </div>
-        <div className="flex-shrink-0 mt-4">
-          <ChatForm handleSubmit={handleSubmit} isPending={isGenerating}>
-            {({ files, setFiles }) => (
-              <MessageInput
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                isGenerating={isGenerating}
-              />
-            )}
-          </ChatForm>
-        </div>
-      </motion.div>
-
-      <motion.div
-        animate={{ width: isSidebarExpanded ? 'calc(50% - 8rem)' : 'calc(50% - 2rem)' }}
-        transition={{ duration: 0.3, ease: 'easeInOut' }}
-        className="flex flex-col h-full p-4 dark:hover:bg-card/20"
-      >
-        <h2 className="text-2xl font-bold mb-4 flex-shrink-0">Our <span className="underline decoration-amber-500">Flavors</span></h2>
-        <div className="flex-grow overflow-y-auto p-4">
-          {selectedRecipe ? (
-            <RecipeDetail recipe={selectedRecipe} onClose={() => setSelectedRecipe(null)} />
-          ) : recipes.length > 0 ? (
-              <div className="flex flex-col gap-4">
-                {recipes.map((recipe, index) => (
-                  <RecipeCard key={index} recipe={recipe} onClick={setSelectedRecipe} />
-                ))}
-              </div>
+        <div className="flex flex-col h-full w-1/2 p-4 border-r border-border dark:hover:bg-card/20">
+            <h2 className="text-2xl font-bold mb-4 flex-shrink-0">Your <span className='text-amber-500'>Flow</span></h2>
+            <div className="flex-grow overflow-y-auto p-4" ref={containerRef}>
+            {messages.length === 0 ? (
+                <PromptSuggestions
+                label="Try these ideas ✨"
+                append={append}
+                suggestions={suggestions}
+                />
             ) : (
-                <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                  <Sparkles className="w-16 h-16 mb-4 text-primary" />
-                  <p className="text-lg">Start typing to get started.</p>
-                  <p className="text-sm">Or try some ideas.</p>
+                <ChatMessages messages={messages}>
+                    <MessageList messages={messages} isTyping={isGenerating}/>
+                </ChatMessages>
+                )}
+            </div>
+            <div className="flex-shrink-0 mt-4">
+            <ChatForm handleSubmit={handleSubmit} isPending={isGenerating}>
+                {({ files, setFiles }) => (
+                <MessageInput
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    isGenerating={isGenerating}
+                />
+                )}
+            </ChatForm>
+            </div>
+        </div>
+
+        <div className="flex flex-col h-full w-1/2 p-4 dark:hover:bg-card/20">
+            <h2 className="text-2xl font-bold mb-4 flex-shrink-0">Our <span className="underline decoration-amber-500">Flavors</span></h2>
+            <div className="flex-grow overflow-y-auto p-4">
+            {selectedRecipe ? (
+                <RecipeDetail recipe={selectedRecipe} onClose={() => setSelectedRecipe(null)} />
+            ) : recipes.length > 0 ? (
+                <div className="flex flex-col gap-4">
+                    {recipes.map((recipe, index) => (
+                    <RecipeCard key={index} recipe={recipe} onClick={setSelectedRecipe} />
+                    ))}
                 </div>
-              )}
+                ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                    <Sparkles className="w-16 h-16 mb-4 text-primary" />
+                    <p className="text-lg">Start typing to get started.</p>
+                    <p className="text-sm">Or try some ideas.</p>
+                    </div>
+                )}
+            </div>
         </div>
       </motion.div>
     </div>

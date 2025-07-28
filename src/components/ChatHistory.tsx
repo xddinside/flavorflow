@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChatSession } from '@/lib/chat-history';
 import { Menu, Plus, MessageSquare, X } from 'lucide-react';
 import { Button } from './ui/button';
+import { cn } from '@/lib/utils';
 
 interface ChatHistoryProps {
   chats: ChatSession[];
@@ -35,17 +36,22 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({ chats, activeChatId, o
       animate={isExpanded ? 'open' : 'closed'}
       variants={sidebarVariants}
       transition={{ duration: 0.3, ease: 'easeInOut' }}
-      className="flex flex-col h-full p-2 border-r border-border dark:bg-stone-900/10 dark:hover:bg-card/30 hover:bg-neutral-200/20"
-      onMouseLeave={() => !isPinned && setIsOpen(false)}
+      className={cn(
+        "absolute z-10 flex flex-col h-full p-2 border-r border-border",
+        isOpen && !isPinned ? "bg-background/80 backdrop-blur-sm" : "bg-background"
+      )}
     >
       {/* Header */}
-      <div className="relative flex items-center justify-center h-10 mb-2">
+      <div className="relative flex items-center justify-center h-10 mb-2 group">
         <button
           onClick={onTogglePin}
           className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded hover:bg-neutral-200/50 dark:hover:bg-stone-800"
         >
           <Menu size={20} />
         </button>
+        <div className="absolute top-full mt-2 hidden group-hover:block bg-muted text-muted-foreground text-xs rounded py-1 px-2">
+          {isPinned ? 'Collapse menu' : isExpanded ? 'Keep menu expanded' : 'Expand menu'}
+        </div>
         <AnimatePresence>
             {isExpanded && (
                 <motion.span
@@ -67,10 +73,11 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({ chats, activeChatId, o
       <div
         className="flex flex-col flex-grow"
         onMouseEnter={() => !isPinned && setIsOpen(true)}
+        onMouseLeave={() => !isPinned && setIsOpen(false)}
       >
         <Button
           onClick={onNewChat}
-          className="mb-4 mt-1 justify-start p-2 dark:bg-primary dark:hover:bg-primary/85"
+          className="mb-4 mt-4 justify-start p-2 dark:bg-primary dark:hover:bg-primary/85"
         >
           <Plus size={20} className="shrink-0" />
           <AnimatePresence>
