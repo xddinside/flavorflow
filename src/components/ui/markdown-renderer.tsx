@@ -1,4 +1,4 @@
-import React, { Suspense } from "react"
+import React, { Suspense, JSX } from "react"
 import Markdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 
@@ -184,7 +184,7 @@ const COMPONENTS = {
   tr: withClass("tr", "m-0 border-t p-0 even:bg-muted"),
   p: withClass("p", "whitespace-pre-wrap"),
   hr: withClass("hr", "border-foreground/20"),
-  img: ({ node, ...props }) => (
+  img: ({ node, ...props }: any) => (
     // eslint-disable-next-line @next/next/no-img-element
     <img style={{ maxWidth: '100%', height: 'auto' }} {...props} />
   ),
@@ -194,7 +194,7 @@ function withClass(Tag: keyof JSX.IntrinsicElements, classes: string) {
   const Component = ({ node, ...props }: any) => (
     <Tag className={classes} {...props} />
   )
-  Component.displayName = Tag
+  Component.displayName = String(Tag)
   return Component
 }
 

@@ -9,7 +9,7 @@ export async function POST(req: Request) {
     process.env.UNSPLASH_ACCESS_KEY_3,
     process.env.UNSPLASH_ACCESS_KEY_4,
     process.env.UNSPLASH_ACCESS_KEY_5,
-  ].filter(Boolean);
+  ].filter(Boolean) as string[];
 
   if (UNSPLASH_ACCESS_KEYS.length === 0) {
     console.error('No Unsplash API keys found. Please set UNSPLASH_ACCESS_KEY_n environment variables.');

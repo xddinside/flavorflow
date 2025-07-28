@@ -27,7 +27,7 @@ export default function FlavorFlow() {
   const recipes = activeChatId ? loadRecipes(activeChatId) : [];
 
   const lastMessage = messages[messages.length - 1];
-  const { containerRef } = useAutoScroll([messages.length, lastMessage?.content]);
+  const { containerRef } = useAutoScroll<HTMLDivElement>([messages.length, lastMessage?.content]);
 
   useEffect(() => {
     const loadedChats = loadChats();
@@ -223,8 +223,10 @@ export default function FlavorFlow() {
     setIsGenerating(false);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
     sendChatMessage(input);
   };
 

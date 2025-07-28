@@ -21,7 +21,7 @@ import { PromptSuggestions } from "@/components/ui/prompt-suggestions"
 
 interface ChatPropsBase {
   handleSubmit: (
-    event?: { preventDefault?: () => void },
+    event: React.FormEvent<HTMLFormElement>,
     options?: { experimental_attachments?: FileList }
   ) => void
   messages: Array<Message>
@@ -270,7 +270,7 @@ interface ChatFormProps {
   className?: string
   isPending: boolean
   handleSubmit: (
-    event?: { preventDefault?: () => void },
+    event: React.FormEvent<HTMLFormElement>,
     options?: { experimental_attachments?: FileList }
   ) => void
   children: (props: {
@@ -283,7 +283,7 @@ export const ChatForm = forwardRef<HTMLFormElement, ChatFormProps>(
   ({ children, handleSubmit, isPending, className }, ref) => {
     const [files, setFiles] = useState<File[] | null>(null)
 
-    const onSubmit = (event: React.FormEvent) => {
+    const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
       if (!files) {
         handleSubmit(event)
         return
