@@ -188,6 +188,8 @@ export default function FlavorFlow() {
           imageUrl,
           ingredients: recipeData.ingredients || [],
           steps: recipeData.steps || [],
+          prepTime: recipeData.prepTime || "N/A",
+          servings: recipeData.servings || 0,
         });
       }
       if (chatId) {

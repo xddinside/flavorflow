@@ -7,6 +7,8 @@ export interface Recipe {
   imageUrl: string;
   ingredients: string[];
   steps: string[];
+  prepTime: string;
+  servings: number;
 }
 
 interface RecipeCardProps {
