@@ -116,8 +116,8 @@ export function Chat({
       const updatedParts = lastAssistantMessage.parts.map((part: any) => {
         if (
           part.type === "tool-invocation" &&
-          part.toolInvocation &&
-          part.toolInvocation.state === "call"
+            part.toolInvocation &&
+            part.toolInvocation.state === "call"
         ) {
           needsUpdate = true
           return {
@@ -182,11 +182,11 @@ export function Chat({
           </Button>
         </>
       ) : (
-        <CopyButton
-          content={message.content}
-          copyMessage="Copied response to clipboard!"
-        />
-      ),
+          <CopyButton
+            content={message.content}
+            copyMessage="Copied response to clipboard!"
+          />
+        ),
     }),
     [onRateResponse]
   )
@@ -238,18 +238,12 @@ export function ChatMessages({
   messages,
   children,
 }: React.PropsWithChildren<{
-  messages: Message[]
-}>) {
-  const { containerRef, scrollToBottom } = useAutoScroll([messages.length]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, scrollToBottom]);
+    messages: Message[]
+  }>) {
 
   return (
     <div
-      className="grid grid-cols-1 overflow-y-auto pb-4"
-      ref={containerRef}
+      className="grid grid-cols-1 pb-4"
     >
       <div className="max-w-full [grid-column:1/1] [grid-row:1/1]">
         {children}
@@ -259,8 +253,8 @@ export function ChatMessages({
 }
 
 export const ChatContainer = forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
+HTMLDivElement,
+React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => {
   return (
     <div

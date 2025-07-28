@@ -163,6 +163,10 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
 
   const isUser = role === "user"
 
+  if (role === "assistant" && !content.trim() && !toolInvocations && (!parts || parts.length === 0)) {
+    return null
+  }
+
   const formattedTime = createdAt?.toLocaleTimeString("en-US", {
     hour: "2-digit",
     minute: "2-digit",

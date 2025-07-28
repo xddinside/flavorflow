@@ -120,3 +120,21 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .animate-typing-dot-bounce {
+    animation: typing-dot-bounce 1.2s infinite ease-in-out;
+  }
+}
+
+@keyframes typing-dot-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}

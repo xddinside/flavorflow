@@ -11,7 +11,6 @@ interface MessageListProps {
   messages: Message[]
   showTimeStamps?: boolean
   isTyping?: boolean
-  align?: "left" | "right" | "center"
   messageOptions?:
     | AdditionalMessageOptions
     | ((message: Message) => AdditionalMessageOptions)
@@ -21,7 +20,6 @@ export function MessageList({
   messages,
   showTimeStamps = true,
   isTyping = false,
-  align = 'left',
   messageOptions,
 }: MessageListProps) {
   return (
@@ -36,13 +34,17 @@ export function MessageList({
           <ChatMessage
             key={index}
             showTimeStamp={showTimeStamps}
-            align={align}
+            align={message.role === 'user' ? 'left' : 'right'}
             {...message}
             {...additionalOptions}
           />
         )
       })}
-      {isTyping && <TypingIndicator />}
+      {isTyping && (
+        <div className="flex justify-end">
+          <TypingIndicator />
+        </div>
+      )}
     </div>
   )
 }

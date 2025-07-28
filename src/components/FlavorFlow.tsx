@@ -11,6 +11,7 @@ import { PromptSuggestions } from '@/components/ui/prompt-suggestions';
 import { Sparkles } from 'lucide-react';
 import { saveChats, loadChats, saveRecipes, loadRecipes, ChatSession } from '@/lib/chat-history';
 import { ChatHistory } from './ChatHistory';
+import { useAutoScroll } from '@/hooks/use-auto-scroll';
 
 export default function FlavorFlow() {
   const [chats, setChats] = useState<Record<string, ChatSession>>({});
@@ -24,6 +25,9 @@ export default function FlavorFlow() {
   const activeChat = activeChatId ? chats[activeChatId] : null;
   const messages = activeChat?.messages || [];
   const recipes = activeChatId ? loadRecipes(activeChatId) : [];
+
+  const lastMessage = messages[messages.length - 1];
+  const { containerRef } = useAutoScroll([messages.length, lastMessage?.content]);
 
   useEffect(() => {
     const loadedChats = loadChats();
@@ -68,7 +72,6 @@ export default function FlavorFlow() {
     let targetChatId = activeChatId;
     let messagesForChat = messages;
 
-    // If there's no active chat, create one.
     if (!targetChatId) {
       const newChatId = Date.now().toString();
       const newChat: ChatSession = {
@@ -82,7 +85,6 @@ export default function FlavorFlow() {
       targetChatId = newChatId;
       messagesForChat = [];
     } else if (messagesForChat.length === 0) {
-      // Update title for an existing, but empty, chat on its first message.
       setChats(prev => ({
         ...prev,
         [targetChatId!]: { ...prev[targetChatId!], title: content.substring(0, 30) }
@@ -92,13 +94,12 @@ export default function FlavorFlow() {
     const userMessage: Message = { id: Date.now().toString(), role: 'user', content: content };
     const updatedMessages = [...messagesForChat, userMessage];
 
-    // Update messages for the target chat.
     setChats(prev => ({
-        ...prev,
-        [targetChatId!]: {
-            ...prev[targetChatId!],
-            messages: updatedMessages,
-        }
+      ...prev,
+      [targetChatId!]: {
+        ...prev[targetChatId!],
+        messages: updatedMessages,
+      }
     }));
 
     setInput('');
@@ -124,8 +125,8 @@ export default function FlavorFlow() {
 
     const messagesWithPlaceholder = [...updatedMessages, { id: assistantMessageId, role: 'assistant', content: '' }];
     setChats(prev => ({
-        ...prev,
-        [targetChatId!]: { ...prev[targetChatId!], messages: messagesWithPlaceholder }
+      ...prev,
+      [targetChatId!]: { ...prev[targetChatId!], messages: messagesWithPlaceholder }
     }));
 
 
@@ -138,61 +139,79 @@ export default function FlavorFlow() {
 
     const finalResponse = assistantResponse.trim();
 
+    console.log(finalResponse)
+
     const updateAssistantMessage = (content: string) => {
-        const finalMessages = messagesWithPlaceholder.map(msg =>
-            msg.id === assistantMessageId ? { ...msg, content } : msg
-        );
-        setChats(prev => ({
-            ...prev,
-            [targetChatId!]: { ...prev[targetChatId!], messages: finalMessages }
-        }));
+      const finalMessages = messagesWithPlaceholder.map(msg =>
+        msg.id === assistantMessageId ? { ...msg, content } : msg
+      );
+      setChats(prev => ({
+        ...prev,
+        [targetChatId!]: { ...prev[targetChatId!], messages: finalMessages }
+      }));
     }
+
+    // Helper function to process and save recipes
+    const processAndSaveRecipes = async (jsonString: string, chatId: string): Promise<number> => {
+      let cleanJsonString = jsonString.trim();
+      if (cleanJsonString.startsWith('```json')) {
+        cleanJsonString = cleanJsonString.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
+      }
+      const jsonResponse = JSON.parse(cleanJsonString);
+      const fetchedRecipes: Recipe[] = [];
+      const recipesData = Array.isArray(jsonResponse) ? jsonResponse : [jsonResponse];
+
+      for (const recipeData of recipesData) {
+        const recipeName = recipeData.recipeName || "Untitled Recipe";
+        const description = recipeData.description || "";
+        let imageUrl = `https://via.placeholder.com/300x200?text=${encodeURIComponent(recipeName)}`;
+
+        if (description) {
+          try {
+            const imageRes = await fetch("/api/generate-image", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ description }),
+            });
+            const data = await imageRes.json();
+            if (data.imageUrl) {
+              imageUrl = data.imageUrl;
+            }
+          } catch (error) {
+            console.error("Error generating image:", error);
+          }
+        }
+
+        fetchedRecipes.push({
+          recipeName,
+          description,
+          imageUrl,
+          ingredients: recipeData.ingredients || [],
+          steps: recipeData.steps || [],
+        });
+      }
+      if (chatId) {
+        saveRecipes(chatId, fetchedRecipes);
+      }
+      return fetchedRecipes.length;
+    };
+
 
     if (finalResponse.includes('|||')) {
       const [textPart, jsonPart] = finalResponse.split('|||');
-      updateAssistantMessage(textPart.trim());
-
+      let messageContent = textPart.trim();
       try {
-        let jsonString = jsonPart.trim();
-        if (jsonString.startsWith('```json')) {
-          jsonString = jsonString.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
-        }
-        const jsonResponse = JSON.parse(jsonString);
-        const fetchedRecipes: Recipe[] = [];
-        const recipesData = Array.isArray(jsonResponse) ? jsonResponse : [jsonResponse];
-
-        for (const recipeData of recipesData) {
-          const recipeName = recipeData.recipeName || "Untitled Recipe";
-          const description = recipeData.description || "";
-          let imageUrl = `https://via.placeholder.com/300x200?text=${encodeURIComponent(recipeName)}`;
-
-          if (description) {
-            try {
-              const imageRes = await fetch("/api/generate-image", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ description }),
-              });
-              const data = await imageRes.json();
-              if (data.imageUrl) {
-                imageUrl = data.imageUrl;
-              }
-            } catch (error) {
-              console.error("Error generating image:", error);
-            }
-          }
-
-          fetchedRecipes.push({
-            recipeName,
-            description,
-            imageUrl,
-            ingredients: recipeData.ingredients || [],
-            steps: recipeData.steps || [],
-          });
-        }
-        if (targetChatId) {
-            saveRecipes(targetChatId, fetchedRecipes);
-        }
+        await processAndSaveRecipes(jsonPart, targetChatId!);
+      } catch (e) {
+        console.error("Failed to parse JSON:", e);
+        messageContent += "\n\nError: I received a recipe in an invalid format.";
+      }
+      updateAssistantMessage(messageContent);
+    } else if (finalResponse.trim().startsWith('```json')) {
+      try {
+        const recipeCount = await processAndSaveRecipes(finalResponse, targetChatId!);
+        const message = `I've found ${recipeCount} recipe${recipeCount !== 1 ? 's' : ''} for your request.`;
+        updateAssistantMessage(message);
       } catch (e) {
         console.error("Failed to parse JSON:", e);
         updateAssistantMessage("Error: I received a recipe in an invalid format.");
@@ -241,7 +260,7 @@ export default function FlavorFlow() {
         className="flex flex-col h-full p-4 border-r border-border dark:hover:bg-card/20"
       >
         <h2 className="text-2xl font-bold mb-4 flex-shrink-0">Your <span className='text-amber-500'>Flow</span></h2>
-        <div className="flex-grow overflow-y-auto p-4">
+        <div className="flex-grow overflow-y-auto p-4" ref={containerRef}>
           {messages.length === 0 ? (
             <PromptSuggestions
               label="Try these ideas ✨"
@@ -250,7 +269,7 @@ export default function FlavorFlow() {
             />
           ) : (
               <ChatMessages messages={messages}>
-                <MessageList messages={messages} align="left"/>
+                <MessageList messages={messages} isTyping={isGenerating}/>
               </ChatMessages>
             )}
         </div>
