@@ -261,7 +261,7 @@ export default function FlavorFlow() {
         animate={{ marginLeft: isSidebarPinned ? '16rem' : '4rem' }}
         transition={{ type: 'spring', stiffness: 400, damping: 40 }}
       >
-        <div className="flex flex-col h-full w-1/2 p-4 border-r border-border dark:hover:bg-card/20">
+        <div className="flex flex-col h-full w-1/3 p-4 border-r border-border dark:hover:bg-card/20">
             <h2 className="text-2xl font-bold mb-4 flex-shrink-0">Your <span className='text-amber-500'>Flow</span></h2>
             <div className="flex-grow overflow-y-auto p-4" ref={containerRef}>
             {messages.length === 0 ? (
@@ -289,9 +289,9 @@ export default function FlavorFlow() {
             </div>
         </div>
 
-        <div className="flex flex-col h-full w-1/2 p-4 dark:hover:bg-card/20">
+        <div className="flex flex-col h-full w-2/3 p-4 dark:hover:bg-card/20">
             <h2 className="text-2xl font-bold mb-4 flex-shrink-0">Our <span className="underline decoration-amber-500">Flavors</span></h2>
-            <div className="flex-grow overflow-y-auto p-4">
+            <div className="flex-grow overflow-y-auto p-4 overflow-x-hidden">
             {selectedRecipe ? (
                 <RecipeDetail recipe={selectedRecipe} onClose={() => setSelectedRecipe(null)} />
             ) : recipes.length > 0 ? (

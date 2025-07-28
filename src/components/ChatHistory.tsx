@@ -38,7 +38,7 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({ chats, activeChatId, o
       transition={{ duration: 0.3, ease: 'easeInOut' }}
       className={cn(
         "absolute z-10 flex flex-col h-full p-2 border-r border-border",
-        isOpen && !isPinned ? "bg-background/80 backdrop-blur-sm" : "bg-background"
+        isOpen && !isPinned ? "bg-background/70 dark:bg-background/80 backdrop-blur-sm" : "bg-background"
       )}
     >
       {/* Header */}
@@ -49,7 +49,7 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({ chats, activeChatId, o
         >
           <Menu size={20} />
         </button>
-        <div className="absolute top-full mt-2 hidden group-hover:block bg-muted text-muted-foreground text-xs rounded py-1 px-2">
+        <div className="absolute top-full mt-2 hidden group-hover:block bg-background/80 backdrop-blur-xs text-primary text-xs rounded py-2 px-2">
           {isPinned ? 'Collapse menu' : isExpanded ? 'Keep menu expanded' : 'Expand menu'}
         </div>
         <AnimatePresence>
