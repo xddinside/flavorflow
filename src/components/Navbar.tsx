@@ -13,14 +13,16 @@ export default function Navbar() {
           </h1>
 
           {/* <div className="hidden md:flex items-center gap-6"> */}
-          {/*   <Link href="/dashboard">Dashboard</Link> */}
+          {/* <Link href="/dashboard">Dashboard</Link> */}
           {/* </div> */}
         </div>
 
         <div className="flex items-center gap-4 px-4 sm:px-6">
           <ModeToggle />
-          <Button>Login</Button>
-          <Button variant={"ghost"}>Sign Up</Button>
+          <div className="hidden md:flex items-center gap-4">
+            <Button>Login</Button>
+            <Button variant={"ghost"}>Sign Up</Button>
+          </div>
         </div>
     </nav>
   )

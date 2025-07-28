@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChatSession } from '@/lib/chat-history';
-import { Menu, Plus, MessageSquare, X } from 'lucide-react';
+import { LogIn, UserPlus, Menu, Plus, MessageSquare, X } from 'lucide-react';
 import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
 
@@ -143,6 +143,32 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({ chats, activeChatId, o
               </AnimatePresence>
             </div>
           ))}
+        </div>
+        
+        {/* Auth Buttons for Mobile */}
+        <div className="mt-auto pt-4 border-t border-border md:hidden">
+            <AnimatePresence>
+                {isExpanded && (
+                <motion.div
+                    key="auth-buttons"
+                    variants={textVariant}
+                    initial="hidden"
+                    animate="visible"
+                    exit="hidden"
+                    transition={{ duration: 0.2 }}
+                    className="flex flex-col gap-2"
+                >
+                    <Button className="w-full justify-start p-2">
+                        <LogIn size={20} className="shrink-0" />
+                        <span className="ml-17">Login</span>
+                    </Button>
+                    <Button variant="ghost" className="w-full justify-start p-2">
+                        <UserPlus size={20} className="shrink-0" />
+                        <span className="ml-15">Sign Up</span>
+                    </Button>
+                </motion.div>
+                )}
+            </AnimatePresence>
         </div>
       </div>
     </motion.div>

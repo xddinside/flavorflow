@@ -23,7 +23,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ recipe, onClose }) =
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 50, opacity: 0 }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="bg-card text-card-foreground rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden border"
+        className="bg-card text-card-foreground rounded-xl shadow-2xl max-w-full sm:max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden border"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-4 border-b flex justify-between items-center flex-shrink-0">

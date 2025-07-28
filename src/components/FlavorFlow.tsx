@@ -257,11 +257,31 @@ export default function FlavorFlow() {
       />
 
       <motion.div
-        className="flex-1 flex"
+        className="flex-1 flex flex-col md:flex-row"
         animate={{ marginLeft: isSidebarPinned ? '16rem' : '4rem' }}
         transition={{ type: 'spring', stiffness: 400, damping: 40 }}
       >
-        <div className="flex flex-col h-full w-1/3 p-4 border-r border-border dark:hover:bg-card/20">
+        <div className="flex flex-col h-1/2 md:h-full w-full md:w-2/3 p-4 dark:hover:bg-card/20">
+            <h2 className="text-2xl font-bold mb-4 flex-shrink-0">Our <span className="underline decoration-amber-500">Flavors</span></h2>
+            <div className="flex-grow overflow-y-auto p-4 overflow-x-hidden">
+            {selectedRecipe ? (
+                <RecipeDetail recipe={selectedRecipe} onClose={() => setSelectedRecipe(null)} />
+            ) : recipes.length > 0 ? (
+                <div className="flex flex-col gap-4">
+                    {recipes.map((recipe, index) => (
+                    <RecipeCard key={index} recipe={recipe} onClick={setSelectedRecipe} />
+                    ))}
+                </div>
+                ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                    <Sparkles className="w-16 h-16 mb-4 text-primary" />
+                    <p className="text-lg">Start typing to get started.</p>
+                    <p className="text-sm">Or try some ideas.</p>
+                    </div>
+                )}
+            </div>
+        </div>
+        <div className="flex flex-col h-1/2 md:h-full w-full md:w-1/3 p-4 border-t md:border-t-0 md:border-r border-border dark:hover:bg-card/20">
             <h2 className="text-2xl font-bold mb-4 flex-shrink-0">Your <span className='text-amber-500'>Flow</span></h2>
             <div className="flex-grow overflow-y-auto p-4" ref={containerRef}>
             {messages.length === 0 ? (
@@ -286,27 +306,6 @@ export default function FlavorFlow() {
                 />
                 )}
             </ChatForm>
-            </div>
-        </div>
-
-        <div className="flex flex-col h-full w-2/3 p-4 dark:hover:bg-card/20">
-            <h2 className="text-2xl font-bold mb-4 flex-shrink-0">Our <span className="underline decoration-amber-500">Flavors</span></h2>
-            <div className="flex-grow overflow-y-auto p-4 overflow-x-hidden">
-            {selectedRecipe ? (
-                <RecipeDetail recipe={selectedRecipe} onClose={() => setSelectedRecipe(null)} />
-            ) : recipes.length > 0 ? (
-                <div className="flex flex-col gap-4">
-                    {recipes.map((recipe, index) => (
-                    <RecipeCard key={index} recipe={recipe} onClick={setSelectedRecipe} />
-                    ))}
-                </div>
-                ) : (
-                    <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                    <Sparkles className="w-16 h-16 mb-4 text-primary" />
-                    <p className="text-lg">Start typing to get started.</p>
-                    <p className="text-sm">Or try some ideas.</p>
-                    </div>
-                )}
             </div>
         </div>
       </motion.div>

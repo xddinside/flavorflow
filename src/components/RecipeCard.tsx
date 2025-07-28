@@ -19,18 +19,18 @@ interface RecipeCardProps {
 export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onClick }) => {
   return (
     <div
-      className="cursor-pointer rounded-lg shadow-md overflow-hidden transform hover:scale-105 flex flex-row bg-card hover:bg-muted hover:shadow-lg transition-all duration-300 ease-in-out border border-primary-background/20"
+      className="cursor-pointer rounded-lg shadow-md overflow-hidden transform hover:scale-105 flex flex-col sm:flex-row bg-card hover:bg-muted hover:shadow-lg transition-all duration-300 ease-in-out border border-primary-background/20"
       onClick={() => onClick(recipe)}
     >
-      <div className="relative w-40 h-40 flex-shrink-0">
+      <div className="relative w-full h-32 sm:w-40 sm:h-40 flex-shrink-0">
         <Image
           src={recipe.imageUrl}
           alt={recipe.recipeName}
           layout="fill"
           objectFit="cover"
-          className="rounded-l-lg"
+          className="rounded-t-lg sm:rounded-l-lg sm:rounded-t-none"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-l-lg"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-t-lg sm:rounded-l-lg sm:rounded-t-none"></div>
       </div>
       <div className="p-4 flex flex-col justify-center flex-grow">
         <h3 className="text-lg font-semibold mb-1 text-card-foreground">{recipe.recipeName}</h3>
