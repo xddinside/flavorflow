@@ -6,7 +6,7 @@ Ever stared into your fridge, full of ingredients but empty of ideas? FlavorFlow
 
 **Live link: [FlavorFlow](https://flavorflow-ai.vercel.app)**
 
-This app was built for the [boot.dev hackathon](https://boot.dev).
+This app was built for the [boot.dev hackathon](https://blog.boot.dev/news/hackathon-2025/).
 
 ---
 
