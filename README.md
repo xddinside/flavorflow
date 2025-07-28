@@ -1,14 +1,16 @@
-# FlavorFlow 🍳
+# FlavorFlow 
 
 From Fridge to Feast: Your Personal AI Cooking Assistant!
 
 Ever stared into your fridge, full of ingredients but empty of ideas? FlavorFlow is here to help! It's a smart cooking assistant powered by Google's Gemini AI that turns your available ingredients into delicious recipes. Just chat with the assistant, tell it what you have, and get inspired.
 
+**Live link: [FlavorFlow](https://flavorflow-ai.vercel.app)**
+
 This app was built for the [boot.dev hackathon](https://boot.dev).
 
 ---
 
-## ✨ Features
+##  Features
 
 * **AI-Powered Recipe Generation:** Get creative recipe suggestions based on the ingredients you have on hand.
 * **Conversational Interface:** Chat with the AI to refine recipes, ask for variations, or get cooking advice.
@@ -18,7 +20,7 @@ This app was built for the [boot.dev hackathon](https://boot.dev).
 * **Persistent Chat History:** Your conversations are saved locally, so you can always come back to a previous recipe or idea.
 * **Light & Dark Mode:** A sleek and modern interface that's easy on the eyes, day or night.
 
-## 🚀 How It Works
+##  How It Works
 
 FlavorFlow uses a Next.js frontend and backend to create a seamless experience.
 1.  You type in the ingredients you have or the kind of meal you're looking for.
@@ -27,7 +29,7 @@ FlavorFlow uses a Next.js frontend and backend to create a seamless experience.
 4.  For each recipe, a descriptive search query is sent to the Unsplash API to fetch a high-quality image.
 5.  The recipes and images are then beautifully displayed on the user interface for you to explore!
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 * **Framework:** [Next.js](https://nextjs.org/)
 * **Language:** [TypeScript](https://www.typescriptlang.org/)
