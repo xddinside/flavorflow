@@ -1,3 +1,5 @@
+
+
 # FlavorFlow 
 
 From Fridge to Feast: Your Personal AI Cooking Assistant!
@@ -52,7 +54,7 @@ To get a local copy up and running, follow these simple steps.
 
 1.  **Clone the repo**
     ```sh
-    git clone [https://github.com/xddinside/flavorflow.git](https://github.com/xddinside/flavorflow.git)
+    git clone https://github.com/xddinside/flavorflow.git
     ```
 2.  **Install NPM packages**
     ```sh
